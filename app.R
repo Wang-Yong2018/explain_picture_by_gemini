@@ -11,12 +11,16 @@
 
 library(shiny)
 library(gemini.R)
+source('utils.R')
+
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   sidebarLayout(
     NULL,
     mainPanel(
+      mainPanel(
+       
       fileInput(
         inputId = 'file',
         label = 'Choose file to upload',
@@ -27,6 +31,7 @@ ui <- fluidPage(
                     width='100%',
                     height='100%'),
       ),
+      textOutput('server_status' ),
       textInput(
         inputId = 'prompt',
         label = 'Prompt',
@@ -38,12 +43,21 @@ ui <- fluidPage(
       )
     )
   )
-)
+))
 
 server <- function(input, output) {
   
   setAPI(Sys.getenv('gemini_api')) # check https://makersuite.google.com/app/apikey
-  gemini("Explain about the gemini in astrology in one line")
+ 
+  
+  output$server_status<- renderText({
+    status_code <- get_server_status_code()
+    message <- paste0(
+      "server connection:",
+      status_code
+    )
+    return(message)
+  })
   
   observeEvent(input$file, {
     path <- input$file$datapath
@@ -53,7 +67,16 @@ server <- function(input, output) {
   
   observeEvent(input$goButton, {
     output$text1 <- renderText({
-      gemini_image(input$prompt, input$file$datapath)
+      print("\n==========================")
+      print(paste0(' input is :',input$prompt))
+      message <-  gemini_image(input$prompt, input$file$datapath)
+      if (is.null(message)){
+        message <- 'failed to detect!!!'
+      }
+      print("**************************")
+      print(paste0(' output is :',message))
+    
+      return(message)
     })
   })
 }
